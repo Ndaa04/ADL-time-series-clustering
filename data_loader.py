@@ -38,9 +38,15 @@ def load_and_preprocess_data(csv_2023, csv_2024, decimals=5):
     return df_clean.sort_values(['id_lokasi', 'tanggal']).reset_index(drop=True)
 
 def smooth_and_resample(df_clean, window_size=31, poly_order=2):
-    def process_group(group):
+    # 1. Ekstrak metadata statis per lokasi agar aman dari KeyError Pandas
+    loc_meta = df_clean.groupby('id_lokasi')[['lat_y', 'lon_x', 'grid_row', 'grid_col', 'grid_id']].first()
+    
+    results = []
+    # 2. Proses per lokasi menggunakan loop (lebih stabil & sering lebih cepat di Pandas >2.0)
+    for loc_id, group in df_clean.groupby('id_lokasi'):
         series = group.set_index('tanggal')['NDVI']
         daily = series.resample('D').interpolate(method='linear').reset_index()
+        
         if len(daily) >= window_size:
             daily['NDVI_smooth'] = savgol_filter(
                 daily['NDVI'].values, window_length=window_size, polyorder=poly_order
@@ -48,19 +54,16 @@ def smooth_and_resample(df_clean, window_size=31, poly_order=2):
         else:
             daily['NDVI_smooth'] = daily['NDVI'].astype('float32')
             
-        daily['id_lokasi'] = group['id_lokasi'].iloc[0]
-        daily['lat_y'] = group['lat_y'].iloc[0]
-        daily['lon_x'] = group['lon_x'].iloc[0]
-        daily['grid_row'] = group['grid_row'].iloc[0]
-        daily['grid_col'] = group['grid_col'].iloc[0]
-        daily['grid_id'] = group['grid_id'].iloc[0]
-        return daily
-
-    processed = df_clean.groupby('id_lokasi').apply(process_group).reset_index(drop=True)
-    for col in ['NDVI', 'lat_y', 'lon_x']:
-        processed[col] = processed[col].astype('float32')
-    processed['id_lokasi'] = processed['id_lokasi'].astype('category')
-    return processed
+        daily['id_lokasi'] = loc_id
+        daily['lat_y'] = loc_meta.loc[loc_id, 'lat_y']
+        daily['lon_x'] = loc_meta.loc[loc_id, 'lon_x']
+        daily['grid_row'] = loc_meta.loc[loc_id, 'grid_row']
+        daily['grid_col'] = loc_meta.loc[loc_id, 'grid_col']
+        daily['grid_id'] = loc_meta.loc[loc_id, 'grid_id']
+        
+        results.append(daily)
+        
+    return pd.concat(results, ignore_index=True)
 
 def filter_and_sample_data(df_smooth, target_year=2024, n_sample=500, seed=42):
     df_year = df_smooth.loc[df_smooth['tanggal'].dt.year == target_year].copy()
