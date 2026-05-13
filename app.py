@@ -23,7 +23,7 @@ from visualization import (
 # ─────────────────────────────────────────────
 #  PAGE CONFIG & CSS
 # ─────────────────────────────────────────────
-st.set_page_config(page_title="Fenologi Padi", page_icon="🌾",
+st.set_page_config(page_title="Indeks Vegetasi", page_icon="🌾",
                    layout="wide", initial_sidebar_state="collapsed")
 
 st.markdown("""
