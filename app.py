@@ -56,7 +56,7 @@ st.markdown("""
 st.markdown("""
 <div style="background:linear-gradient(135deg,#1b5e20,#388e3c,#1b5e20);
             padding:1.8rem 2.5rem;border-radius:12px;margin-bottom:2rem;color:white;">
-  <h1 style="margin:0;font-size:1.9rem;">🌾 Analisis Fenologi Padi</h1>
+  <h1 style="margin:0;font-size:1.9rem;">🌾 Analisis Indeks Vegetasi</h1>
   <p style="margin:.3rem 0 0;opacity:.85;">Pipeline NDVI · DTW · HDBSCAN — Kabupaten Lamongan</p>
 </div>
 """, unsafe_allow_html=True)
